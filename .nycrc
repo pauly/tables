@@ -1,0 +1,17 @@
+{
+  "all": true,
+  "reporter": [
+    "html",
+    "text"
+  ],
+  "statements": 100,
+  "lines": 100,
+  "branches": 100,
+  "functions": 100,
+  "exclude": [
+    "coverage",
+    "scripts",
+    "docs",
+    "webpack.config.js"
+  ]
+}
