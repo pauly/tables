@@ -4,20 +4,30 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1" />
     <meta charset="UTF-8">
     <style>
-      p, input, button {
+      p, input, button, label {
+        font-family: Arial;
         margin: 0.5em;
         padding: 5px;
-        font-size: 2em;
         border-radius: 10px;
-        transition: all 0.5s;
+        transition: all 0.3s;
       }
-      p > button {
+      p {
+        font-size: 2em;
+      }
+      p.game button {
         font-size: 1em;
       }
-      p.options button {
-        font-size: 0.5em;
+      label {
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        white-space: nowrap;
       }
-      p.timer {
+      input,
+      button {
+        width: 3em;
+      }
+      .timer {
         display: none;
         background-color: #0f0;
         border: 1px #00f solid;
@@ -25,19 +35,417 @@
       }
       button {
         background-color: #0ff;
-        width: 3em;
       }
-      button.correct {
+      .correct {
         background-color: #0f0;
       }
-      button.incorrect {
+      .incorrect {
         background-color: #f00;
       }
-      button.disabled {
+      .disabled {
         background-color: #ccc;
       }
     </style>
   </head>
   <body>
-  <script type="text/javascript" src="./game.min.js"></script></body>
+  <script type="text/javascript">/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// identity function for calling harmony imports with the correct context
+/******/ 	__webpack_require__.i = function(value) { return value; };
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "./";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = module.exports = {};
+
+utils._on = function (element, eventType, callback) {
+  if (!element) return;
+  if (element.addEventListener) element.addEventListener(eventType, callback, false);else if (element.attachEvent) element.attachEvent('on' + eventType, callback);else element['on' + eventType] = callback;
+};
+
+utils._safeParseJSON = function (json) {
+  try {
+    return JSON.parse(json);
+  } catch (e) {
+    return {};
+  }
+};
+
+/* // attach as a key down event and block non numerics
+utils._blockNonNumericKeyPress = event => {
+  if (!event || !event.code) return
+  if (/^(Arrow|Digit|Tab|Back)/.test(event.code)) return
+  // allow pasting?
+  if (event.code === 'KeyV' && (event.metaKey || event.ctrlKey)) return
+  // Could use event.which instead but it's depracated apparently
+  // if ([8, 9, 37, 38, 39, 40, 49, 50, 51, 52, 53, 54, 55, 56, 57].indexOf(event.which) !== -1) return
+  if (process.env.NODE_ENV !== 'production') console.info('blocking key press', event.code)
+  event.preventDefault()
+} */
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/* global localStorage */
+
+var utils = __webpack_require__(0);
+
+var game = module.exports = {};
+
+var defaultOptions = {
+  min: 2,
+  max: 12,
+  time: 60,
+  answers: 12,
+  upTo: 16,
+  tables: [16],
+  highScore: 0
+};
+var body = document.body;
+var _createElement = document.createElement.bind(document);
+
+var random = function random(number) {
+  return Math.floor(Math.random() * number);
+};
+
+function setClass(element, className) {
+  element.className = className;
+}
+
+function appendChild(element, child) {
+  element.appendChild(child);
+}
+
+function setInnerHTML(element, content) {
+  element.innerHTML = content;
+  /* if (typeof content === 'string') {
+    element.innerHTML = content
+    return
+  }
+  while (element.lastChild) {
+    element[removeChild](element.lastChild)
+  }
+  appendChild(element, content) */
+}
+
+function shuffle(array) {
+  for (var i = array.length - 1; i > 0; i -= 1) {
+    var j = random(i + 1);
+    var temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+}
+
+function store(item, value) {
+  localStorage.setItem(item, JSON.stringify(value));
+}
+
+function fetch(item) {
+  try {
+    return utils._safeParseJSON(localStorage.getItem(item));
+  } catch (e) {}
+}
+
+game._click = function (event) {
+  game._attempts++;
+  if (event.target.innerHTML === '' + game._currentAnswer) {
+    setClass(event.target, 'correct');
+    game._score++;
+  } else {
+    setClass(event.target, 'incorrect');
+  }
+  setTimeout(function () {
+    setClass(event.target, '');
+  }, 100);
+  game._play();
+};
+
+game._updateTimer = function () {
+  game._timerSection.innerHTML++;
+  game._timerSection.style['margin-right'] = (game._data.time - game._timerSection.innerHTML) / game._data.time * 100 + '%';
+  if (parseInt(game._timerSection.innerHTML, 10) >= parseInt(game._data.time, 10)) {
+    game._gameOver();
+  }
+};
+
+game._confirm = function (message, callback) {
+  setInnerHTML(game._div, '');
+  var question = _createElement('p');
+  setClass(question, 'game');
+  setInnerHTML(question, message);
+  appendChild(game._div, question);
+  var button = _createElement('button');
+  setInnerHTML(button, 'OK');
+  appendChild(question, button);
+  utils._on(button, 'click', function (event) {
+    game._div.removeChild(question);
+    callback(event.target);
+  });
+};
+
+game._gameOver = function () {
+  clearInterval(game._interval);
+  var message = 'You scored ' + game._score;
+  if (game._score > game._data.highScore) {
+    game._data.highScore = game._score;
+    message += ' - new high score!';
+  } else {
+    message += ' - high score is ' + game._data.highScore;
+  }
+  message += ' - click OK to play again';
+  store('data', game._data);
+  game._confirm(message, game._start);
+};
+
+game._updateOptions = function (event) {
+  var number = parseInt(event.target.innerHTML, 10);
+  var index = game._data.tables.indexOf(number);
+  if (index === -1) {
+    setClass(event.target, '');
+    game._data.tables.push(number);
+  } else {
+    setClass(event.target, 'disabled');
+    game._data.tables.splice(index, 1);
+  }
+  store('data', game._data);
+  game._init();
+};
+
+game._init = function () {
+  if (!game._div) {
+    game._div = _createElement('div');
+    appendChild(body, game._div);
+  }
+  if (!game._timerSection) {
+    game._timerSection = _createElement('p');
+    setClass(game._timerSection, 'timer');
+    appendChild(body, game._timerSection);
+  }
+  if (!game._scoreSection) {
+    game._scoreSection = _createElement('p');
+    appendChild(game._div, game._scoreSection);
+  }
+  game._data = Object.assign({}, defaultOptions, fetch('data'));
+  if (!game._optionsSection) {
+    game._optionsSection = _createElement('div');
+    setClass(game._optionsSection, 'options');
+    appendChild(body, game._optionsSection);
+  }
+  setInnerHTML(game._optionsSection, '');
+  var link = _createElement('p');
+  setInnerHTML(link, 'Options; tables to include:');
+  appendChild(game._optionsSection, link);
+  utils._on(link, 'click', function () {
+    setClass(game._optionsSection, 'ok');
+  });
+  var tablesWrapper = _createElement('p');
+  appendChild(game._optionsSection, tablesWrapper);
+  for (var i = game._data.min; i <= game._data.upTo; i++) {
+    var button = _createElement('button');
+    setClass(button, game._data.tables.indexOf(i) === -1 ? 'disabled' : '');
+    setInnerHTML(button, i);
+    utils._on(button, 'click', game._updateOptions);
+    appendChild(tablesWrapper, button);
+  }
+  var p = _createElement('p');
+  appendChild(game._optionsSection, p);
+
+  var _loop = function _loop(key) {
+    if (key !== 'tables') {
+      // dealt with separately above
+      var label = _createElement('label');
+      setInnerHTML(label, key + ':');
+      var input = _createElement('input');
+      input.value = game._data[key];
+      input.type = 'number';
+      appendChild(label, input);
+      // appendChild(game._optionsSection, label)
+      appendChild(p, label);
+      utils._on(input, 'change', function (event) {
+        game._data[key] = event.target.value;
+        console.log(key, 'is now', event.target.value, game._data);
+        store('data', game._data);
+        game._init();
+      });
+    }
+  };
+
+  for (var key in game._data) {
+    _loop(key);
+  }
+  /* if (!game._photo) {
+    game._photo = _createElement('input')
+    game._photo.type = 'file'
+    game._photo.accept = 'image/*'
+    appendChild(body, game._photo)
+    utils._on(game._photo, 'change', event => {
+      const files = event.target.files
+      if (!files || !files.length) return
+      console.log(files)
+    })
+  } */
+  game._attempts = 0;
+  game._score = 0;
+  setInnerHTML(game._timerSection, 0);
+  game._buttons = [];
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = game._data.tables[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var thisTable = _step.value;
+
+      for (var _i = game._data.min; _i <= game._data.max; _i++) {
+        var _button2 = _createElement('button');
+        _button2.style.transform = 'rotate(' + (random(6) - 3) + 'deg)';
+        _button2._question = _i + ' x ' + thisTable;
+        setInnerHTML(_button2, _i * thisTable);
+        utils._on(_button2, 'click', game._click);
+        game._buttons.push(_button2);
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  game._buttonsHTML = _createElement('p');
+  setClass(game._buttonsHTML, 'game');
+  shuffle(game._buttons);
+  game._buttons = game._buttons.slice(0, game._data.answers);
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = game._buttons[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _button = _step2.value;
+
+      appendChild(game._buttonsHTML, _button);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+};
+
+game._play = function () {
+  setInnerHTML(game._div, '');
+  appendChild(game._div, game._buttonsHTML);
+  var p = _createElement('p');
+  var randomButton = null;
+  while (!randomButton || game._currentAnswer === randomButton.innerHTML) {
+    randomButton = game._buttons[random(game._buttons.length)];
+  }
+  p.innerHTML = game._attempts + 1 + '. What is ' + randomButton._question + '?';
+  game._currentAnswer = randomButton.innerHTML;
+  appendChild(game._div, p);
+  setInnerHTML(game._scoreSection, 'Score: ' + game._score + '/' + game._attempts);
+};
+
+game._start = function () {
+  game._init();
+  game._confirm('Ready to play..?', function () {
+    game._interval = setInterval(game._updateTimer, 1000);
+    game._play();
+  });
+};
+
+game._start();
+
+/***/ })
+/******/ ]);</script></body>
 </html>

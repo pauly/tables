@@ -1,5 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const InlineChunkWebpackPlugin = require('html-webpack-inline-chunk-plugin')
 
 const env = process.env.NODE_ENV || 'development'
 
@@ -12,16 +14,17 @@ const definePlugin = new webpack.DefinePlugin({
     'npm_package_config_port': process.env.npm_package_config_port
   }
 })
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+const inlinePlugin = new InlineChunkWebpackPlugin({
+  inlineChunks: ['game']
+})
+
 const htmlPlugin = new HtmlWebpackPlugin({
   title: process.env.npm_package_name,
+  // excludeChunks: ['game'],
   template: 'src/index.html'
 })
-const InlineChunkWebpackPlugin = require('html-webpack-inline-chunk-plugin')
-const inlinePlugin = new InlineChunkWebpackPlugin({
-  inlineChunks: [process.env.npm_package_name]
-})
-const dedupePlugin = new webpack.optimize.DedupePlugin()
+
 const uglifyPlugin = new webpack.optimize.UglifyJsPlugin({
   compress: {
     warnings: false,
@@ -66,14 +69,15 @@ const config = module.exports = {
   },
 
   module: {
-    loaders: [
+    rules: [
       {
-        test: /\.jsx?/,
-        loader: 'babel-loader',
-        query: {
-          presets: [
-            'es2015'
-          ]
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['babel-preset-env']
+          }
         }
       }
     ]
@@ -91,6 +95,8 @@ const config = module.exports = {
   recordsPath: path.resolve('/tmp/webpack.json')
 }
 
-config.output.pathinfo = true
-config.output.filename = '[name].min.js'
-config.plugins.unshift(dedupePlugin, uglifyPlugin)
+if (process.env.NODE_ENV === 'production') {
+  config.output.pathinfo = true
+  config.output.filename = '[name].min.js'
+  config.plugins.unshift(uglifyPlugin)
+}
